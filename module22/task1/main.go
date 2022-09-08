@@ -28,6 +28,7 @@ func main() {
 	fmt.Printf("Кооличество чётных чисел в массиве: %d\nКолличество нечётных чисел в массиве: %d", even, odd)
 }
 
+// printArray - function for printing an array with 10 integers to the console
 func printArray(array [size]int) {
 	fmt.Println("Числа в массиве:")
 	for _, d := range array {
@@ -36,6 +37,7 @@ func printArray(array [size]int) {
 	fmt.Print("\n")
 }
 
+// countAfter - function for counting the number of integers in the array after the entered.
 func countAfter(array [size]int, limit int) (answer int) {
 	for i, d := range array {
 		if d == limit {
@@ -46,6 +48,7 @@ func countAfter(array [size]int, limit int) (answer int) {
 	return
 }
 
+// evenAndOdd - function for counting even and odd integers
 func evenAndOdd(array [size]int) (even, odd int) {
 	for _, d := range array {
 		if d%2 == 0 {

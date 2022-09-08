@@ -16,6 +16,7 @@ func makeArray() (array [size]int) {
 	return
 }
 
+// searchNumber - function for searching first position of entered number in the array
 func searchNumber(array [size]int, num int) (answer int) {
 	answer = -1
 	min := 0
