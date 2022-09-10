@@ -8,6 +8,7 @@ func main() {
 	fmt.Println("Массив нечётных чисел:", odd)
 }
 
+// evenAndOdd - divides an array into even and odd numbers
 func evenAndOdd(array ...int) (even, odd []int) {
 	for _, i := range array {
 		if i%2 == 0 {
