@@ -28,6 +28,7 @@ func main() {
 	defer close(numChan)
 }
 
+// square - the function for counting the square of a number
 func square(num int, wg *sync.WaitGroup, numChan chan int) {
 	defer wg.Done()
 	num = num * num
@@ -35,6 +36,7 @@ func square(num int, wg *sync.WaitGroup, numChan chan int) {
 	numChan <- num
 }
 
+// multByTwo multiplies 2 numbers
 func multByTwo(wg *sync.WaitGroup, numChan chan int) {
 	defer wg.Done()
 	num := (<-numChan) * 2
