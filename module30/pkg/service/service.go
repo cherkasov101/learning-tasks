@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"io"
 	user "module30/pkg/user"
 	"net/http"
@@ -85,4 +86,24 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s.Users[sourceId].Name + " и " + s.Users[targetId].Name + " теперь друзья"))
+}
+
+func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
+	userId := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	if s.Users[id] == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	w.Write([]byte("Пользователь " + s.Users[id].Name + " удалён"))
+	s.Users[id] = nil
+	w.WriteHeader(http.StatusOK)
 }
