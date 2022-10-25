@@ -13,6 +13,8 @@ func main() {
 	r.Post("/create", srv.Create)
 	r.Post("/make_friends", srv.MakeFriends)
 	r.Delete("/delete_user/{id}", srv.Delete)
+	r.Get("/friends/{id}", srv.GetUserFriends)
+	r.Put("/new_age/{id}", srv.UpdateUserAge)
 
 	http.ListenAndServe("localhost:8080", r)
 }

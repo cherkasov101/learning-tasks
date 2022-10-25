@@ -20,6 +20,10 @@ type MakingFriends struct {
 	TargetId string `json:"target_id"`
 }
 
+type UpdateAge struct {
+	NewAge string `json:"new age"`
+}
+
 // Create - function for creating new user.
 func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	content, err := io.ReadAll(r.Body)
@@ -105,5 +109,61 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("Пользователь " + s.Users[id].Name + " удалён"))
 	s.Users[id] = nil
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) GetUserFriends(w http.ResponseWriter, r *http.Request) {
+	userId := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	if s.Users[id] == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	for _, i := range s.Users[id].Friends {
+		w.Write([]byte(strconv.Itoa(i)))
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) UpdateUserAge(w http.ResponseWriter, r *http.Request) {
+	userId := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	if s.Users[id] == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Неверный id"))
+		return
+	}
+
+	content, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	defer r.Body.Close()
+
+	var update UpdateAge
+	if err := json.Unmarshal(content, &update); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	s.Users[id].Age = update.NewAge
+	w.Write([]byte("Возраст пользователя " + s.Users[id].Name + " обновлён: " + s.Users[id].Age))
 	w.WriteHeader(http.StatusOK)
 }
