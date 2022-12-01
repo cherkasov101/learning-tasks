@@ -2,17 +2,53 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"io"
+	"io/ioutil"
 	user "module30/pkg/user"
 	"net/http"
+	"os"
 	"strconv"
 )
 
-var countId = 1
+var (
+	countId  = 1
+	fileName = "../db/db.json"
+)
 
 type Service struct {
 	Users map[int]*user.User
+}
+
+func (s *Service) SaveDB() error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	data, err := json.Marshal(s.Users)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) ReadDB() error {
+	db, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(db, s.Users); err != nil {
+		fmt.Println("json")
+	}
+	return nil
 }
 
 type MakingFriends struct {
@@ -47,6 +83,10 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("id нового пользователя: " + strconv.Itoa(countId) + "\n"))
 
 	countId++
+
+	if err = s.SaveDB(); err != nil {
+		w.Write([]byte("x3"))
+	}
 }
 
 func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {

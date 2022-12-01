@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	service "module30/pkg/service"
 	user "module30/pkg/user"
@@ -10,6 +11,9 @@ import (
 func main() {
 	r := chi.NewRouter()
 	srv := service.Service{make(map[int]*user.User)}
+	if err := srv.ReadDB(); err != nil {
+		fmt.Println("no")
+	}
 	r.Post("/create", srv.Create)
 	r.Post("/make_friends", srv.MakeFriends)
 	r.Delete("/delete_user/{id}", srv.Delete)
