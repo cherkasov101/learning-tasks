@@ -11,15 +11,18 @@ import (
 
 func main() {
 	r := chi.NewRouter()
+
 	var srv service.Service
 	db, err := ioutil.ReadFile(service.FileName)
 	if err != nil {
 		fmt.Println("can't read")
+		return
 	}
 	if err = json.Unmarshal(db, &srv); err != nil {
-		fmt.Println("json")
+		fmt.Println("can't read json")
+		return
 	}
-	fmt.Println(srv.CountId)
+
 	r.Post("/create", srv.Create)
 	r.Post("/make_friends", srv.MakeFriends)
 	r.Delete("/delete_user/{id}", srv.Delete)

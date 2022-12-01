@@ -80,7 +80,8 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	s.CountId = strconv.Itoa(count)
 
 	if err = s.SaveDB(); err != nil {
-		w.Write([]byte("x3"))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 	}
 }
 
@@ -114,11 +115,15 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s.Users[sourceId].Name + " и " + s.Users[targetId].Name + " теперь друзья"))
+
+	if err = s.SaveDB(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 }
 
 func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
-	userId := chi.URLParam(r, "id")
-	id := userId
+	id := chi.URLParam(r, "id")
 
 	if s.Users[id] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -127,13 +132,17 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("Пользователь " + s.Users[id].Name + " удалён"))
-	s.Users[id] = nil
+	delete(s.Users, id)
 	w.WriteHeader(http.StatusOK)
+
+	if err := s.SaveDB(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 }
 
 func (s *Service) GetUserFriends(w http.ResponseWriter, r *http.Request) {
-	userId := chi.URLParam(r, "id")
-	id := userId
+	id := chi.URLParam(r, "id")
 
 	if s.Users[id] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -173,4 +182,9 @@ func (s *Service) UpdateUserAge(w http.ResponseWriter, r *http.Request) {
 	s.Users[userId].Age = update.NewAge
 	w.Write([]byte("Возраст пользователя " + s.Users[userId].Name + " обновлён: " + s.Users[userId].Age))
 	w.WriteHeader(http.StatusOK)
+
+	if err = s.SaveDB(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 }

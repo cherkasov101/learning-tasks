@@ -1,9 +1,9 @@
 {"countId":"6",
-  "users":{"1":{
-    "name":"Larisa","age":"21","friends":[]},
-    "2":{"name":"Anna","age":"18","friends":[]},
+  "users":{
+    "1":{"name":"Larisa","age":"21","friends":["2"]},
+    "2":{"name":"Anna","age":"18","friends":["1"]},
     "3":{"name":"Tom","age":"32","friends":[]},
-    "4":{"name":"Vika","age":"29","friends":[]},
+    "4":{"name":"Vika","age":"28","friends":[]},
     "5":{"name":"Igor","age":"33","friends":[]}
   }
 }
