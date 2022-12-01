@@ -1,19 +1,25 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	service "module30/pkg/service"
-	user "module30/pkg/user"
+	"io/ioutil"
+	service "module31/pkg/service"
 	"net/http"
 )
 
 func main() {
 	r := chi.NewRouter()
-	srv := service.Service{make(map[int]*user.User)}
-	if err := srv.ReadDB(); err != nil {
-		fmt.Println("no")
+	var srv service.Service
+	db, err := ioutil.ReadFile(service.FileName)
+	if err != nil {
+		fmt.Println("can't read")
 	}
+	if err = json.Unmarshal(db, &srv); err != nil {
+		fmt.Println("json")
+	}
+	fmt.Println(srv.CountId)
 	r.Post("/create", srv.Create)
 	r.Post("/make_friends", srv.MakeFriends)
 	r.Delete("/delete_user/{id}", srv.Delete)

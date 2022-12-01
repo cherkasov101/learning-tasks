@@ -2,51 +2,35 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"io"
-	"io/ioutil"
-	user "module30/pkg/user"
+	user "module31/pkg/user"
 	"net/http"
 	"os"
 	"strconv"
 )
 
-var (
-	countId  = 1
-	fileName = "../db/db.json"
-)
+var FileName = "../db/db.json"
 
 type Service struct {
-	Users map[int]*user.User
+	CountId string                `json:"countId"`
+	Users   map[string]*user.User `json:"users"`
 }
 
 func (s *Service) SaveDB() error {
-	file, err := os.Create(fileName)
+	file, err := os.Create(FileName)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	data, err := json.Marshal(s.Users)
+	data, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
 	_, err = file.Write(data)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func (s *Service) ReadDB() error {
-	db, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-
-	if err = json.Unmarshal(db, s.Users); err != nil {
-		fmt.Println("json")
 	}
 	return nil
 }
@@ -70,6 +54,10 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if s.CountId == "" {
+		s.CountId = "1"
+	}
+
 	var user user.User
 	if err := json.Unmarshal(content, &user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -77,12 +65,19 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Users[countId] = &user
+	s.Users[s.CountId] = &user
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("id нового пользователя: " + strconv.Itoa(countId) + "\n"))
+	w.Write([]byte("id нового пользователя: " + s.CountId + "\n"))
 
-	countId++
+	count, err := strconv.Atoi(s.CountId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	count++
+	s.CountId = strconv.Itoa(count)
 
 	if err = s.SaveDB(); err != nil {
 		w.Write([]byte("x3"))
@@ -105,19 +100,8 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sourceId, err := strconv.Atoi(makingFriend.SourceId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Неверный id"))
-		return
-	}
-
-	targetId, err := strconv.Atoi(makingFriend.TargetId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Неверный id"))
-		return
-	}
+	sourceId := makingFriend.SourceId
+	targetId := makingFriend.TargetId
 
 	if s.Users[sourceId] == nil || s.Users[targetId] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -134,12 +118,7 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(userId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Неверный id"))
-		return
-	}
+	id := userId
 
 	if s.Users[id] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -154,12 +133,7 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) GetUserFriends(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(userId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Неверный id"))
-		return
-	}
+	id := userId
 
 	if s.Users[id] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -168,21 +142,14 @@ func (s *Service) GetUserFriends(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, i := range s.Users[id].Friends {
-		w.Write([]byte(strconv.Itoa(i)))
+		w.Write([]byte(i))
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) UpdateUserAge(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(userId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Неверный id"))
-		return
-	}
-
-	if s.Users[id] == nil {
+	if s.Users[userId] == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Неверный id"))
 		return
@@ -203,7 +170,7 @@ func (s *Service) UpdateUserAge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Users[id].Age = update.NewAge
-	w.Write([]byte("Возраст пользователя " + s.Users[id].Name + " обновлён: " + s.Users[id].Age))
+	s.Users[userId].Age = update.NewAge
+	w.Write([]byte("Возраст пользователя " + s.Users[userId].Name + " обновлён: " + s.Users[userId].Age))
 	w.WriteHeader(http.StatusOK)
 }
