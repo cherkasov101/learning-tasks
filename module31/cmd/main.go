@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"io/ioutil"
@@ -9,7 +10,15 @@ import (
 	"net/http"
 )
 
+var localHost = "localhost:"
+
 func main() {
+	var lh string
+	flag.StringVar(&lh, "lh", "8080", "set localhost")
+	flag.Parse()
+
+	localHost += lh
+
 	r := chi.NewRouter()
 
 	var srv service.Service
@@ -29,5 +38,5 @@ func main() {
 	r.Get("/friends/{id}", srv.GetUserFriends)
 	r.Put("/new_age/{id}", srv.UpdateUserAge)
 
-	http.ListenAndServe("localhost:8080", r)
+	http.ListenAndServe(localHost, r)
 }
