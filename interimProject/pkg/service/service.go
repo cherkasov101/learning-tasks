@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Service struct {
 	CountId string
 	Cities  map[string]*city.City
+	mux     sync.Mutex
 }
 
 func MakeService(db [][]string) *Service {
@@ -42,6 +44,7 @@ func MakeService(db [][]string) *Service {
 	service := Service{
 		strconv.Itoa(intId),
 		cities,
+		sync.Mutex{},
 	}
 
 	return &service
@@ -65,12 +68,14 @@ func (s *Service) GetCityInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mux.Lock()
 	city := s.Cities[id]
 	answer := "Название города: " + city.Name +
 		"\nРегион: " + city.Region +
 		"\nОкруг: " + city.District +
 		"\nЧисленность населения: " + city.Population +
 		"\nГод основания: " + city.Foundation
+	s.mux.Unlock()
 
 	w.Write([]byte(answer))
 	w.WriteHeader(http.StatusOK)
@@ -92,6 +97,7 @@ func (s *Service) AddCity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mux.Lock()
 	s.Cities[s.CountId] = &city
 
 	w.WriteHeader(http.StatusCreated)
@@ -105,6 +111,7 @@ func (s *Service) AddCity(w http.ResponseWriter, r *http.Request) {
 	}
 	count++
 	s.CountId = strconv.Itoa(count)
+	s.mux.Unlock()
 }
 
 func (s *Service) DeleteCity(w http.ResponseWriter, r *http.Request) {
@@ -116,8 +123,10 @@ func (s *Service) DeleteCity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mux.Lock()
 	w.Write([]byte("Город " + s.Cities[id].Name + " удалён"))
 	delete(s.Cities, id)
+	s.mux.Unlock()
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -148,7 +157,9 @@ func (s *Service) UpdatePopulation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mux.Lock()
 	s.Cities[id].Population = update.NewPopulation
+	s.mux.Unlock()
 	w.Write([]byte("Информации о численности населения города " + s.Cities[id].Name + " обновлена: " + s.Cities[id].Population))
 	w.WriteHeader(http.StatusOK)
 }
@@ -156,6 +167,8 @@ func (s *Service) UpdatePopulation(w http.ResponseWriter, r *http.Request) {
 func (s *Service) GetCitiesInRegion(w http.ResponseWriter, r *http.Request) {
 	region := chi.URLParam(r, "region")
 	cities := ""
+
+	s.mux.Lock()
 	for _, city := range s.Cities {
 		if city.Region == region {
 			if cities != "" {
@@ -164,6 +177,8 @@ func (s *Service) GetCitiesInRegion(w http.ResponseWriter, r *http.Request) {
 			cities += city.Name
 		}
 	}
+	s.mux.Unlock()
+
 	if cities == "" {
 		cities = "Города в регионе " + region + " не найдены"
 	}
@@ -175,6 +190,8 @@ func (s *Service) GetCitiesInRegion(w http.ResponseWriter, r *http.Request) {
 func (s *Service) GetCitiesInDistrict(w http.ResponseWriter, r *http.Request) {
 	district := chi.URLParam(r, "district")
 	cities := ""
+
+	s.mux.Lock()
 	for _, city := range s.Cities {
 		if city.District == district {
 			if cities != "" {
@@ -183,6 +200,8 @@ func (s *Service) GetCitiesInDistrict(w http.ResponseWriter, r *http.Request) {
 			cities += city.Name
 		}
 	}
+	s.mux.Unlock()
+
 	if cities == "" {
 		cities = "Города в округе " + district + " не найдены"
 	}
@@ -214,6 +233,7 @@ func (s *Service) GetCitiesByPopulation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	s.mux.Lock()
 	for _, city := range s.Cities {
 		popul, err := strconv.Atoi(city.Population)
 		if err != nil {
@@ -229,6 +249,8 @@ func (s *Service) GetCitiesByPopulation(w http.ResponseWriter, r *http.Request) 
 			cities += city.Name
 		}
 	}
+	s.mux.Unlock()
+
 	if cities == "" {
 		cities = "Города с населением в диапазоне между " + population[0] + " и " + population[1] + " не найдены"
 	}
@@ -260,6 +282,7 @@ func (s *Service) GetCitiesByYears(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mux.Lock()
 	for _, city := range s.Cities {
 		year, err := strconv.Atoi(city.Foundation)
 		if err != nil {
@@ -275,6 +298,8 @@ func (s *Service) GetCitiesByYears(w http.ResponseWriter, r *http.Request) {
 			cities += city.Name
 		}
 	}
+	s.mux.Unlock()
+
 	if cities == "" {
 		cities = "Города с датой основания в диапазоне между " + years[0] + " и " + years[1] + " не найдены"
 	}
